@@ -1,0 +1,195 @@
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import { Trash2, Pencil, Plus } from "lucide-react";
+import { motion } from "framer-motion";
+
+export default function AccountManager() {
+  // 以 localStorage 作為簡易持久化
+  const [accounts, setAccounts] = useState(() => {
+    const saved = localStorage.getItem("accounts");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [form, setForm] = useState({ username: "", email: "", role: "" });
+
+  // 每當 accounts 變動就同步到 localStorage
+  useEffect(() => {
+    localStorage.setItem("accounts", JSON.stringify(accounts));
+  }, [accounts]);
+
+  const resetForm = () => setForm({ username: "", email: "", role: "" });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editingIndex === null) {
+      setAccounts([...accounts, form]);
+    } else {
+      const next = [...accounts];
+      next[editingIndex] = form;
+      setAccounts(next);
+    }
+    resetForm();
+    setEditingIndex(null);
+    setOpen(false);
+  };
+
+  const handleDelete = (idx) => {
+    if (!confirm("確定要刪除這個帳號？")) return;
+    setAccounts(accounts.filter((_, i) => i !== idx));
+  };
+
+  const handleEdit = (idx) => {
+    setEditingIndex(idx);
+    setForm(accounts[idx]);
+    setOpen(true);
+  };
+
+  const filtered = accounts.filter((a) =>
+    [a.username, a.email, a.role].some((v) =>
+      v.toLowerCase().includes(search.toLowerCase())
+    )
+  );
+
+  return (
+    <Card className="max-w-5xl mx-auto mt-10 p-6 space-y-6">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-2xl font-bold">帳號管理</CardTitle>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-2">
+              <Plus className="w-4 h-4" /> 新增帳號
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {editingIndex === null ? "新增帳號" : "編輯帳號"}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                placeholder="使用者名稱"
+                value={form.username}
+                onChange={(e) =>
+                  setForm({ ...form, username: e.target.value })
+                }
+                required
+              />
+              <Input
+                type="email"
+                placeholder="Email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+              />
+              <Input
+                placeholder="角色 (e.g., admin, user)"
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                required
+              />
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setOpen(false);
+                    resetForm();
+                    setEditingIndex(null);
+                  }}
+                >
+                  取消
+                </Button>
+                <Button type="submit">
+                  {editingIndex === null ? "新增" : "更新"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+
+      <Input
+        placeholder="搜尋帳號..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="max-w-xs"
+      />
+
+      <CardContent className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>使用者名稱</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>角色</TableHead>
+              <TableHead className="text-right">操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center">
+                  無資料
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((acc, idx) => (
+                <motion.tr
+                  key={idx}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <TableCell>{acc.username}</TableCell>
+                  <TableCell>{acc.email}</TableCell>
+                  <TableCell>{acc.role}</TableCell>
+                  <TableCell className="flex justify-end gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleEdit(idx)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      onClick={() => handleDelete(idx)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </motion.tr>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}

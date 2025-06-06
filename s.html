@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>微軟帳號步驟導引</title>
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===== CSS 變數與基礎 ===== */
+      :root {
+        --primary: #2563eb;
+        --bg: linear-gradient(120deg, #eef2ff 0%, #f9fafb 100%);
+        --text: #111827;
+        --card-bg: #ffffff;
+        --shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        --radius: 1rem;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        padding: 2rem 1rem 6rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+      }
+
+      a {
+        color: var(--primary);
+        word-break: break-all;
+        position: relative;
+        overflow: hidden;
+      }
+
+      a::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 100%;
+        height: 2px;
+        background: var(--primary);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      a:hover::after {
+        transform: translateX(0);
+      }
+
+      /* === 捲動進度條 === */
+      #progress-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: rgba(0, 0, 0, 0.05);
+        z-index: 9999;
+      }
+
+      #progress-bar {
+        width: 0%;
+        height: 100%;
+        background: var(--primary);
+        transition: width 0.1s linear;
+      }
+
+      /* === 容器 === */
+      .container {
+        width: 100%;
+        max-width: 1100px;
+        animation: fadeIn 0.8s ease-in;
+      }
+
+      /* === 步驟卡片 === */
+      .step-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+      }
+
+      .step {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        opacity: 0;
+        transform: translateY(40px) scale(0.95);
+        transition: transform 0.4s ease, opacity 0.4s ease;
+        cursor: grab;
+      }
+
+      .step.show {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      .step img {
+        width: 100%;
+        border-radius: calc(var(--radius) - 0.25rem);
+        margin: 0.5rem 0 1rem;
+        object-fit: cover;
+        cursor: zoom-in;
+        transition: transform 0.3s ease;
+      }
+
+      .step:hover img {
+        transform: scale(1.06) rotate(0.4deg);
+      }
+
+      /* === Lightbox === */
+      #lightbox {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 10000;
+      }
+
+      #lightbox.show {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      #lightbox img {
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        cursor: zoom-out;
+      }
+
+      /* === Notice === */
+      .notice {
+        margin-top: 2rem;
+        background: #fef3c7;
+        padding: 1rem;
+        border-left: 6px solid #f59e0b;
+        border-radius: var(--radius);
+        font-weight: 600;
+        animation: fadeIn 0.8s ease-in 0.2s backwards;
+      }
+
+      /* === Back‑to‑Top === */
+      #backToTop {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 48px;
+        height: 48px;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+
+      #backToTop.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      /* === Keyframes === */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* === 小螢幕優化 === */
+      @media (max-width: 480px) {
+        body {
+          padding: 1rem 0.5rem 5rem;
+        }
+        .step-list {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 捲動進度條 -->
+    <div id="progress-wrapper"><div id="progress-bar"></div></div>
+
+    <!-- Lightbox -->
+    <div id="lightbox"><img src="" alt="larger view" /></div>
+
+    <div class="container">
+      <header>
+        <h1>微軟帳號密碼重設與登入指引</h1>
+        <p>依照下列兩個階段完成操作，確保帳號安全。</p>
+      </header>
+
+      <!-- 階段一 -->
+      <section>
+        <h2>階段一：重設密碼</h2>
+        <p>
+          前往
+          <a
+            href="https://account.live.com/ResetPassword.aspx"
+            target="_blank"
+            rel="noopener"
+            >https://account.live.com/ResetPassword.aspx</a
+          >，並輸入我提供給你的<strong>微軟帳號</strong>。
+        </p>
+
+        <div class="step-list">
+          <article class="step"><h3>步驟 1</h3><img src="mine/01.jfif" alt="步驟1 畫面" /></article>
+          <article class="step"><h3>步驟 2</h3><img src="mine/02.jfif" alt="步驟2 畫面" /></article>
+          <article class="step"><h3>步驟 3</h3><img src="mine/03.jfif" alt="步驟3 畫面" /></article>
+          <article class="step"><h3>步驟 4</h3><img src="mine/04.jfif" alt="步驟4 畫面" /></article>
+        </div>
+      </section>
+
+      <!-- 階段二 -->
+      <section>
+        <h2>階段二：登入微軟官網</h2>
+        <p>
+          開啟
+          <a
+            href="https://www.microsoft.com/zh-tw/account"
+            target="_blank"
+            rel="noopener"
+            >https://www.microsoft.com/zh-tw/account</a
+          >，<strong>再度</strong>輸入我提供給你的微軟帳號（這裡並非上一階段驗證用的帳號）。
+        </p>
+
+        <div class="step-list">
+          <article class="step"><h3>步驟 5</h3><img src="mine/05.jfif" alt="步驟5 畫面" /></article>
+          <article class="step"><h3>步驟 6</h3><img src="mine/06.jfif" alt="步驟6 畫面" /></article>
+          <article class="step"><h3>步驟 7</h3><img src="mine/07.jfif" alt="步驟7 畫面" /></article>
+          <article class="step"><h3>步驟 8</h3><img src="mine/08.jfif" alt="步驟8 畫面" /></article>
+          <article class="step"><h3>步驟 9</h3><img src="mine/09.jfif" alt="步驟9 畫面" /></article>
+          <article class="step"><h3>步驟 10</h3><img src="mine/10.jfif" alt="步驟10 畫面" /></article>
+          <article class="step"><h3>步驟 11</h3><img src="mine/11.jfif" alt="步驟11 畫面" /></article>
+          <article class="step"><h3>步驟 12</h3><img src="mine/12.jfif" alt="步驟12 畫面" /></article>
+        </div>
+      </section>
+
+      <section class="notice">
+        <p>
+          提醒：<strong>階段一與階段二必須都完成</strong>，若帳號遭到盜用概不負責！
+        </p>
+      </section>
+
+      <footer>
+        <h1>完成！</h1>
+      </footer>
+    </div>
+
+    <!-- Back‑to‑Top Button -->
+    <button id="backToTop" aria-label="回到頂部">▲</button>
+
+    <!-- Script: VanillaTilt -->
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.7.3/dist/vanilla-tilt.min.js"></script>
+    <script>
+      /* === 捲動進度條 === */
+      window.addEventListener("scroll", () => {
+        const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const progress = (window.scrollY / docHeight) * 100;
+        document.getElementById("progress-bar").style.width = progress + "%";
+
+        // Back‑to‑Top 顯示與否
+        const backBtn = document.getElementById("backToTop");
+        if (window.scrollY > 600) {
+          backBtn.classList.add("show");
+        } else {
+          backBtn.classList.remove("show");
+        }
+      });
+
+      /* === Back‑to‑Top 滑動 === */
+      document.getElementById("backToTop").addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      /* === IntersectionObserver: 卡片進場效果 === */
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("show");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.25 }
+      );
+
+      document.querySelectorAll(".step").forEach((step) => observer.observe(step));
+
+      /* === Lightbox === */
+      const lightbox = document.getElementById("lightbox");
+      const lightboxImg = lightbox.querySelector("img");
+
+      document.querySelectorAll(".step img").forEach((img) => {
+        img.addEventListener("click", () => {
+          lightboxImg.src = img.src;
+          lightbox.classList.add("show");
+        });
+      });
+
+      lightbox.addEventListener("click", () => lightbox.classList.remove("show"));
+
+      /* === Tilt 效果 === */
+      VanillaTilt.init(document.querySelectorAll(".step"), {
+        max: 6,
+        speed: 400,
+        glare: true,
+        "max-glare": 0.15,
+      });
+    </script>
+  </body>
+</html>
